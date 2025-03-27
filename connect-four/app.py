@@ -2,7 +2,7 @@ import pygame
 import sys
 
 # Initialize Pygame
-pygame.init()
+pygame.init() 
 
 # Screen dimensions
 SCREEN_WIDTH = 700
