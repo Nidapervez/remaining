@@ -112,7 +112,7 @@ def clear_lines(grid):
 def main():
     tetromino = create_tetromino()
     fall_time = 0
-    fall_speed = 0.5
+    fall_speed = 0.1
     running = True
 
     while running:
