@@ -2,6 +2,9 @@ import streamlit as st
 import qrcode
 import io
 from PIL import Image
+import cv2
+import numpy as np
+from pyzbar.pyzbar import decode
 
 # Function to generate QR code
 def generate_qr_code(data, color):
@@ -24,37 +27,58 @@ def generate_qr_code(data, color):
 
     return img_bytes
 
+# Function to decode QR code
+def decode_qr_code(image):
+    image = Image.open(image).convert("RGB")
+    image_np = np.array(image)
+    qr_codes = decode(image_np)
+    
+    if qr_codes:
+        return qr_codes[0].data.decode("utf-8")
+    else:
+        return None
+
 # Streamlit UI
 def main():
-    st.set_page_config(page_title="QR Code Generator", page_icon="🔗", layout="centered")
+    st.set_page_config(page_title="QR Code Generator & Decoder", page_icon="🔗", layout="centered")
 
-    st.title("🔗 QR Code Generator")
-    st.markdown("### Generate a custom QR Code easily!")
+    st.title("🔗 QR Code Generator & Decoder")
+    st.markdown("### Generate and Decode QR Codes Easily!")
 
-    # Input for QR Code Data
-    qr_data = st.text_input("Enter text or URL", "")
+    # Tabs for Generator and Decoder
+    tab1, tab2 = st.tabs(["Generate QR Code", "Decode QR Code"])
 
-    # Color Picker for QR Code
-    qr_color = st.color_picker("Pick QR Code Color", "#000000")
+    with tab1:
+        st.subheader("Generate QR Code")
+        qr_data = st.text_input("Enter text or URL", "")
+        qr_color = st.color_picker("Pick QR Code Color", "#000000")
 
-    # Button to generate QR Code
-    if st.button("Generate QR Code"):
-        if qr_data:
-            img_bytes = generate_qr_code(qr_data, qr_color)
+        if st.button("Generate QR Code"):
+            if qr_data:
+                img_bytes = generate_qr_code(qr_data, qr_color)
+                st.image(img_bytes, caption="Your QR Code", use_container_width=True)
 
-            # Display QR Code
-            st.image(img_bytes, caption="Your QR Code", use_container_width=True)
+                st.download_button(
+                    label="Download QR Code",
+                    data=img_bytes,
+                    file_name="qrcode.png",
+                    mime="image/png"
+                )
+            else:
+                st.warning("⚠️ Please enter text or a URL to generate the QR Code.")
 
-            # Download button
-            st.download_button(
-                label="Download QR Code",
-                data=img_bytes,
-                file_name="qrcode.png",
-                mime="image/png"
-            )
-        else:
-            st.warning("⚠️ Please enter text or a URL to generate the QR Code.")
+    with tab2:
+        st.subheader("Decode QR Code")
+        uploaded_file = st.file_uploader("Upload a QR Code image", type=["png", "jpg", "jpeg"])
+        
+        if uploaded_file:
+            st.image(uploaded_file, caption="Uploaded QR Code", use_container_width=True)
+            decoded_text = decode_qr_code(uploaded_file)
+            
+            if decoded_text:
+                st.success(f"✅ Decoded Text: {decoded_text}")
+            else:
+                st.error("❌ No QR code detected. Please upload a valid QR code image.")
 
-# Run the app
 if __name__ == "__main__":
     main()

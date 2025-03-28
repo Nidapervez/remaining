@@ -1,65 +1,26 @@
-import random
+import streamlit as st
+import markovify
 
-class MarkovChain:
-    def __init__(self):
-        self.model = {}
+# Streamlit UI
+st.title("📜 Text Generator with Markov Chains")
+st.write("Upload a text file, and this app will generate new text using a Markov chain model.")
 
-    def train(self, text, order=2):
-        """Train the Markov model on the given text."""
-        words = text.split()
-        for i in range(len(words) - order):
-            # Create a tuple of the current sequence of words
-            state = tuple(words[i:i + order])
-            next_word = words[i + order]
+# File upload
+uploaded_file = st.file_uploader("Upload a text file", type=["txt"])
 
-            # Add the next word to the model
-            if state not in self.model:
-                self.model[state] = []
-            self.model[state].append(next_word)
+if uploaded_file is not None:
+    # Read the text file
+    text = uploaded_file.read().decode("utf-8")
 
-    def generate(self, seed, length=50):
-        """Generate text using the trained Markov model."""
-        # Convert the seed into a tuple
-        current_state = tuple(seed.split())
+    # Train Markov model
+    text_model = markovify.Text(text)
 
-        # Ensure the seed is in the model
-        if current_state not in self.model:
-            raise ValueError("Seed not found in the model.")
+    # Button to generate text
+    if st.button("Generate Text"):
+        generated_text = text_model.make_sentence(tries=100)
+        if generated_text:
+            st.subheader("📝 Generated Text:")
+            st.write(generated_text)
+        else:
+            st.warning("Couldn't generate a sentence. Try uploading a different text file.")
 
-        output = list(current_state)
-        for _ in range(length):
-            # Check if the current state exists in the model
-            if current_state not in self.model:
-                break  # Stop if the state is not found
-
-            # Get the next word from the model
-            next_word = random.choice(self.model[current_state])
-            output.append(next_word)
-
-            # Update the current state
-            current_state = tuple(output[-len(current_state):])
-
-        return " ".join(output)
-
-
-# Example usage
-if __name__ == "__main__":
-    # Input text (can be replaced with a file read)
-    text = """
-    This is a simple example of a Markov chain. A Markov chain is a stochastic model 
-    that describes a sequence of possible events. Each event depends only on the state 
-    attained in the previous event. This is what makes it a Markov process.
-    """
-
-    # Create and train the Markov chain
-    markov = MarkovChain()
-    markov.train(text, order=2)  # Use order=2 for bigrams
-
-    # Generate text
-    seed = "This is"
-    try:
-        generated_text = markov.generate(seed, length=20)
-        print("Generated Text:")
-        print(generated_text)
-    except ValueError as e:
-        print(e)
